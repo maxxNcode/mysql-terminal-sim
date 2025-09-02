@@ -7,5 +7,6 @@ export default defineConfig({
   server: {
     host: true,
     port: 3000
-  }
+  },
+  base: '/mysql-web-terminal-simulator/' // Add this for GitHub Pages
 })
