@@ -591,6 +591,7 @@ export default function MySQLTerminalSimulator(){
   const [command, setCommand] = useState('');
   const outputRef = useRef(null);
   const inputRef = useRef(null);
+  const commandContainerRef = useRef(null);
 
   // Auto-scroll to bottom when output changes
   useEffect(() => {
@@ -598,6 +599,21 @@ export default function MySQLTerminalSimulator(){
       outputRef.current.scrollTop = outputRef.current.scrollHeight;
     }
   }, [output]);
+
+  // Auto-resize textarea and scroll to bottom when command changes
+  useEffect(() => {
+    if (inputRef.current && commandContainerRef.current) {
+      // Reset height to auto to get the correct scrollHeight
+      inputRef.current.style.height = 'auto';
+      
+      // Calculate new height with higher max limit (300px instead of 150px)
+      const newHeight = Math.min(Math.max(inputRef.current.scrollHeight, 30), 400);
+      inputRef.current.style.height = newHeight + 'px';
+      
+      // Scroll the command container to bottom
+      commandContainerRef.current.scrollTop = commandContainerRef.current.scrollHeight;
+    }
+  }, [command]);
 
   // Focus input on load
   useEffect(() => {
@@ -617,6 +633,7 @@ export default function MySQLTerminalSimulator(){
     setEngine(e);
     if (res.clearScreen) setOutput([]);
     if (res.out) {
+      // Preserve formatting for the command and output
       appendOut(`mysql> ${stmt}\n${res.out}`);
     } else {
       appendOut(`mysql> ${stmt}`);
@@ -636,11 +653,32 @@ export default function MySQLTerminalSimulator(){
   }
 
   function handleKeyDown(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Handle Ctrl+Enter to execute command
+    if (e.ctrlKey && e.key === 'Enter') {
       e.preventDefault();
       if (command.trim()) {
         handleCommandSubmit(e);
       }
+      return;
+    }
+    
+    // Handle Ctrl+L for clear
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'l') {
+      e.preventDefault();
+      setOutput([]);
+    }
+    
+    // Handle Shift+Enter for new line (default behavior in textarea)
+    if (e.key === 'Enter' && e.shiftKey) {
+      // Allow default behavior (new line)
+      return;
+    }
+    
+    // Handle Enter alone - prevent default and add new line
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      // Add new line to the command
+      setCommand(prev => prev + '\n');
     }
   }
 
@@ -694,25 +732,37 @@ export default function MySQLTerminalSimulator(){
             <div className="font-mono text-xs text-slate-400 mb-2 hidden sm:block">Type SQL commands directly in the terminal. Commands end with <span className="text-slate-200">;</span> or <span className="text-slate-200">\\G</span></div>
             <div 
               ref={outputRef}
-              className="bg-black rounded-lg sm:rounded-xl p-2 sm:p-3 h-48 sm:h-64 md:h-[420px] overflow-auto border border-white/10 font-mono text-sm"
+              className="bg-black rounded-lg sm:rounded-xl p-2 sm:p-3 h-[75vh] overflow-auto border border-white/10 font-mono text-sm"
             >
               {output.map((line, i) => (
-                <div key={i} className="whitespace-pre-wrap">{line}</div>
+                // Preserve whitespace formatting with whitespace-pre-wrap
+                <div key={i} className="whitespace-pre-wrap leading-relaxed">{line}</div>
               ))}
-              <div className="flex items-start mt-1">
-                <span className="mr-1">mysql&gt;</span>
-                <form onSubmit={handleCommandSubmit} className="flex-1">
-                  <input
+              <div ref={commandContainerRef} className="flex items-start mt-1 overflow-auto">
+                <span className="mr-1 flex-shrink-0">mysql&gt;</span>
+                <form onSubmit={handleCommandSubmit} className="flex-1 flex">
+                  <textarea
                     ref={inputRef}
-                    type="text"
                     value={command}
                     onChange={(e) => setCommand(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    className="bg-transparent border-none outline-none flex-1 w-full"
+                    className="bg-transparent border-none outline-none flex-1 resize-none overflow-hidden min-h-[30px]"
                     spellCheck={false}
                   />
                 </form>
               </div>
+            </div>
+            <div className="mt-2 flex justify-between items-center">
+              <div className="text-xs text-slate-400">
+                <kbd className="bg-gray-700 px-1 rounded">Ctrl+Enter</kbd> to execute, <kbd className="bg-gray-700 px-1 rounded">Shift+Enter</kbd> for new line
+              </div>
+              <button
+                onClick={handleCommandSubmit}
+                disabled={!command.trim()}
+                className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-600 disabled:cursor-not-allowed rounded text-sm font-medium"
+              >
+                Execute
+              </button>
             </div>
             <div className="mt-2 sm:mt-3 font-mono text-xs text-slate-400 sm:hidden">
               Type SQL commands directly in the terminal. End with <span className="text-slate-200">;</span> or <span className="text-slate-200">\\G</span>
