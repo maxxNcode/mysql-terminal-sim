@@ -11,11 +11,6 @@ export default defineConfig({
   base: '/mysql-web-terminal-simulator/',
   build: {
     outDir: 'dist',
-    assetsDir: 'assets',
-    rollupOptions: {
-      output: {
-        manualChunks: undefined
-      }
-    }
+    assetsDir: 'assets'
   }
 })
