@@ -8,5 +8,14 @@ export default defineConfig({
     host: true,
     port: 3000
   },
-  base: '/mysql-web-terminal-simulator/' // Add this for GitHub Pages
+  base: '/mysql-web-terminal-simulator/',
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
+      }
+    }
+  }
 })
