@@ -591,6 +591,22 @@ export default function MySQLTerminalSimulator(){
   const [verticalMode, setVerticalMode] = useState(false);
   const [multiline, setMultiline] = useState(false);
   const inputRef = useRef(null);
+  const outputRef = useRef(null);
+
+  // Auto-scroll to bottom when output changes
+  useEffect(() => {
+    if (outputRef.current) {
+      outputRef.current.scrollTop = outputRef.current.scrollHeight;
+    }
+  }, [output]);
+
+  // Auto-adjust textarea height based on content
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+      inputRef.current.style.height = Math.min(inputRef.current.scrollHeight, 200) + 'px';
+    }
+  }, [buffer]);
 
   useEffect(()=>{ inputRef.current?.focus(); }, []);
 
@@ -680,7 +696,10 @@ export default function MySQLTerminalSimulator(){
         <div className="grid grid-cols-1 gap-3 sm:gap-4">
           <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} className="bg-black/50 rounded-xl sm:rounded-2xl shadow-xl border border-white/10 p-3 sm:p-4">
             <div className="font-mono text-xs text-slate-400 mb-2 hidden sm:block">Type SQL and press Enter. Commands end with <span className="text-slate-200">;</span> or <span className="text-slate-200">\\G</span></div>
-            <div className="bg-black rounded-lg sm:rounded-xl p-2 sm:p-3 h-48 sm:h-64 md:h-[420px] overflow-auto border border-white/10">
+            <div 
+              ref={outputRef}
+              className="bg-black rounded-lg sm:rounded-xl p-2 sm:p-3 h-48 sm:h-64 md:h-[420px] overflow-auto border border-white/10"
+            >
               <pre className="whitespace-pre-wrap text-xs sm:text-sm leading-relaxed">{output.join('\n')}</pre>
             </div>
             <div className="mt-2 sm:mt-3 flex flex-col sm:flex-row gap-2">
@@ -694,7 +713,7 @@ export default function MySQLTerminalSimulator(){
                   onChange={e=> setBuffer(e.target.value)}
                   onKeyDown={handleKey}
                   placeholder={multiline?"(multi-line) end with ; or \\G":"Enter SQL or type HELP"}
-                  className="flex-1 bg-black/70 border border-white/10 rounded-lg sm:rounded-xl p-2 sm:p-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[60px] sm:min-h-[80px]"
+                  className="flex-1 bg-black/70 border border-white/10 rounded-lg sm:rounded-xl p-2 sm:p-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none overflow-auto"
                 />
                 <div className="flex gap-2">
                   <button 
