@@ -568,10 +568,10 @@ function ToolbarButton({ icon:Icon, label, onClick }){
   return (
     <button 
       onClick={onClick} 
-      className="flex items-center gap-1 sm:gap-2 px-2 py-2 sm:px-3 sm:py-2 rounded-xl sm:rounded-2xl shadow-sm border hover:shadow-md transition text-xs sm:text-sm whitespace-nowrap"
+      className="flex items-center gap-1 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl shadow-sm border hover:shadow-md transition text-xs whitespace-nowrap bg-black/30 hover:bg-black/50"
     >
-      <Icon className="w-4 h-4" />
-      <span className="hidden sm:inline">{label}</span>
+      <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
+      <span className="hidden xs:inline">{label}</span>
     </button>
   );
 }
@@ -662,14 +662,14 @@ export default function MySQLTerminalSimulator(){
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-black text-slate-100 p-4 sm:p-6">
-      <div className="max-w-5xl mx-auto space-y-4">
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Database className="w-6 h-6" />
-            <h1 className="text-xl font-semibold">MySQL Web Terminal</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-black text-slate-100 p-2 sm:p-4 md:p-6">
+      <div className="max-w-5xl mx-auto space-y-3 sm:space-y-4">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Database className="w-5 h-5 sm:w-6 sm:h-6" />
+            <h1 className="text-lg sm:text-xl font-semibold">MySQL Web Terminal</h1>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1 sm:gap-2">
             <ToolbarButton icon={Info} label="Help" onClick={()=> appendOut(helpText())} />
             <ToolbarButton icon={Play} label="Seed Sample" onClick={seedSample} />
             <ToolbarButton icon={Eraser} label="Clear" onClick={()=> setOutput([])} />
@@ -677,45 +677,63 @@ export default function MySQLTerminalSimulator(){
           </div>
         </header>
 
-        <div className="grid grid-cols-1 gap-4">
-          <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} className="bg-black/50 rounded-2xl shadow-xl border border-white/10 p-4">
-            <div className="font-mono text-xs text-slate-400 mb-2">Type SQL and press Enter. Commands end with <span className="text-slate-200">;</span> or <span className="text-slate-200">\\G</span></div>
-            <div className="bg-black rounded-xl p-3 h-64 sm:h-[420px] overflow-auto border border-white/10">
-              <pre className="whitespace-pre-wrap text-sm leading-relaxed">{output.join('\n')}</pre>
+        <div className="grid grid-cols-1 gap-3 sm:gap-4">
+          <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} className="bg-black/50 rounded-xl sm:rounded-2xl shadow-xl border border-white/10 p-3 sm:p-4">
+            <div className="font-mono text-xs text-slate-400 mb-2 hidden sm:block">Type SQL and press Enter. Commands end with <span className="text-slate-200">;</span> or <span className="text-slate-200">\\G</span></div>
+            <div className="bg-black rounded-lg sm:rounded-xl p-2 sm:p-3 h-48 sm:h-64 md:h-[420px] overflow-auto border border-white/10">
+              <pre className="whitespace-pre-wrap text-xs sm:text-sm leading-relaxed">{output.join('\n')}</pre>
             </div>
-            <div className="mt-3 flex items-start gap-2">
-              <span className="font-mono mt-3 text-sm">mysql&gt;</span>
-              <textarea
-                ref={inputRef}
-                value={buffer}
-                onChange={e=> setBuffer(e.target.value)}
-                onKeyDown={handleKey}
-                placeholder={multiline?"(multi-line) end with ; or \\G":"Enter SQL or type HELP"}
-                className="flex-1 bg-black/70 border border-white/10 rounded-xl p-3 font-mono text-sm min-h-[80px] focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-              <button onClick={onEnter} className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 shadow h-12 w-12 flex items-center justify-center">
-                <ChevronRight className="w-5 h-5" />
-              </button>
+            <div className="mt-2 sm:mt-3 flex flex-col sm:flex-row gap-2">
+              <div className="flex items-start">
+                <span className="font-mono text-sm sm:text-base mt-2 sm:mt-3">mysql&gt;</span>
+              </div>
+              <div className="flex-1 flex flex-col gap-2">
+                <textarea
+                  ref={inputRef}
+                  value={buffer}
+                  onChange={e=> setBuffer(e.target.value)}
+                  onKeyDown={handleKey}
+                  placeholder={multiline?"(multi-line) end with ; or \\G":"Enter SQL or type HELP"}
+                  className="flex-1 bg-black/70 border border-white/10 rounded-lg sm:rounded-xl p-2 sm:p-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[60px] sm:min-h-[80px]"
+                />
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setBuffer('')} 
+                    className="px-3 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs sm:text-sm"
+                  >
+                    Clear
+                  </button>
+                  <button 
+                    onClick={onEnter} 
+                    className="flex-1 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 shadow text-sm font-medium"
+                  >
+                    Execute (Enter)
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="mt-2 sm:mt-3 font-mono text-xs text-slate-400 sm:hidden">
+              Type SQL and press Enter. End with <span className="text-slate-200">;</span> or <span className="text-slate-200">\\G</span>
             </div>
           </motion.div>
 
-          <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} className="bg-white/5 rounded-2xl shadow-xl border border-white/10 p-4 space-y-4">
-            <h2 className="text-lg font-semibold">Quick Start</h2>
-            <ol className="list-decimal list-inside space-y-2 text-slate-200 text-sm">
-              <li>Click <b>Seed Sample</b> (creates DB <code>school</code> with <code>students</code> table).</li>
-              <li>Try: <code className="bg-black/40 px-1 rounded">SELECT * FROM students;</code></li>
-              <li>Insert: <code className="bg-black/40 px-1 rounded">INSERT INTO students (first_name,last_name,age,course) VALUES ('Ranz','Gutierrez',20,'BSIT');</code></li>
-              <li>Update: <code className="bg-black/40 px-1 rounded">UPDATE students SET course='BSCS' WHERE first_name='Mark';</code></li>
-              <li>Delete: <code className="bg-black/40 px-1 rounded">DELETE FROM students WHERE age &lt; 21;</code></li>
+          <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} className="bg-white/5 rounded-xl sm:rounded-2xl shadow-xl border border-white/10 p-3 sm:p-4 space-y-3 sm:space-y-4">
+            <h2 className="text-base sm:text-lg font-semibold">Quick Start</h2>
+            <ol className="list-decimal list-inside space-y-1 sm:space-y-2 text-slate-200 text-xs sm:text-sm">
+              <li>Click <b>Seed Sample</b> (creates DB <code>school</code>)</li>
+              <li>Try: <code className="bg-black/40 px-1 rounded text-xs">SELECT * FROM students;</code></li>
+              <li>Insert: <code className="bg-black/40 px-1 rounded text-xs">INSERT INTO students (first_name,last_name,age,course) VALUES ('Ranz','Gutierrez',20,'BSIT');</code></li>
+              <li>Update: <code className="bg-black/40 px-1 rounded text-xs">UPDATE students SET course='BSCS' WHERE first_name='Mark';</code></li>
+              <li>Delete: <code className="bg-black/40 px-1 rounded text-xs">DELETE FROM students WHERE age &lt; 21;</code></li>
             </ol>
-            <h3 className="font-semibold mt-4">Supported Commands</h3>
-            <ul className="list-disc list-inside text-sm text-slate-200 space-y-1">
+            <h3 className="font-semibold mt-3 sm:mt-4 text-sm sm:text-base">Supported Commands</h3>
+            <ul className="list-disc list-inside text-xs sm:text-sm text-slate-200 space-y-1">
               <li><code>HELP</code>, <code>STATUS</code>, <code>HISTORY</code></li>
-              <li><code>CLEAR</code> or <code>\! cls</code> (clear screen), <code>\c</code> (cancel buffer)</li>
+              <li><code>CLEAR</code> or <code>\! cls</code> (clear screen)</li>
               <li>End SELECT with <code>\G</code> for vertical output</li>
             </ul>
-            <h3 className="font-semibold mt-4">Examples</h3>
-            <div className="text-xs space-y-2 bg-black/30 rounded-xl p-3 font-mono overflow-x-auto">
+            <h3 className="font-semibold mt-3 sm:mt-4 text-sm sm:text-base">Examples</h3>
+            <div className="text-xs space-y-2 bg-black/30 rounded-lg sm:rounded-xl p-2 sm:p-3 font-mono overflow-x-auto max-h-32 sm:max-h-40">
 {`
 CREATE DATABASE school;
 USE school;
@@ -733,7 +751,7 @@ SELECT * FROM students ORDER BY age DESC LIMIT 5;
 SELECT COUNT(*) FROM students;
 `}
             </div>
-            <p className="text-xs text-slate-400">Note: This is a learning simulator. Syntax coverage is practical but not perfect.</p>
+            <p className="text-xs text-slate-400">Note: This is a learning simulator.</p>
           </motion.div>
         </div>
       </div>
