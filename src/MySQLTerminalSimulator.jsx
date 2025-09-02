@@ -603,8 +603,13 @@ export default function MySQLTerminalSimulator(){
   // Auto-adjust textarea height based on content
   useEffect(() => {
     if (inputRef.current) {
-      inputRef.current.style.height = 'auto';
-      inputRef.current.style.height = Math.min(inputRef.current.scrollHeight, 200) + 'px';
+      // We need to temporarily set the height to auto to get the correct scrollHeight
+      const current = inputRef.current;
+      current.style.height = 'auto';
+      const scrollHeight = current.scrollHeight;
+      // Set the height to either the scrollHeight or a max of 200px, whichever is smaller
+      // But ensure a minimum height of 60px
+      current.style.height = Math.max(60, Math.min(scrollHeight, 200)) + 'px';
     }
   }, [buffer]);
 
@@ -713,7 +718,7 @@ export default function MySQLTerminalSimulator(){
                   onChange={e=> setBuffer(e.target.value)}
                   onKeyDown={handleKey}
                   placeholder={multiline?"(multi-line) end with ; or \\G":"Enter SQL or type HELP"}
-                  className="flex-1 bg-black/70 border border-white/10 rounded-lg sm:rounded-xl p-2 sm:p-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none overflow-auto"
+                  className="flex-1 bg-black/70 border border-white/10 rounded-lg sm:rounded-xl p-2 sm:p-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none overflow-hidden min-h-[60px]"
                 />
                 <div className="flex gap-2">
                   <button 
