@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { motion } from "framer-motion";
+import TextareaAutosize from 'react-textarea-autosize';
 import { Play, Trash2, Upload, Download, Info, Database, ChevronRight, Eraser } from "lucide-react";
 
 /**
@@ -587,11 +588,9 @@ function usePersistentState(key, initial){
 export default function MySQLTerminalSimulator(){
   const [engine, setEngine] = usePersistentState('mysql-sim-engine', createEmptyEngine());
   const [output, setOutput] = usePersistentState('mysql-sim-output', []);
-  const [buffer, setBuffer] = useState('');
-  const [verticalMode, setVerticalMode] = useState(false);
-  const [multiline, setMultiline] = useState(false);
-  const inputRef = useRef(null);
+  const [command, setCommand] = useState('');
   const outputRef = useRef(null);
+  const inputRef = useRef(null);
 
   // Auto-scroll to bottom when output changes
   useEffect(() => {
@@ -600,37 +599,12 @@ export default function MySQLTerminalSimulator(){
     }
   }, [output]);
 
-  // Auto-adjust textarea height based on content
-  const adjustTextareaHeight = useCallback(() => {
+  // Focus input on load
+  useEffect(() => {
     if (inputRef.current) {
-      const textarea = inputRef.current;
-      // Reset height to auto to get the correct scrollHeight
-      textarea.style.height = 'auto';
-      // Calculate new height based on content
-      const newHeight = Math.max(60, Math.min(textarea.scrollHeight, 200));
-      // Set the new height
-      textarea.style.height = newHeight + 'px';
+      inputRef.current.focus();
     }
   }, []);
-
-  // Adjust textarea height when buffer changes
-  useEffect(() => {
-    adjustTextareaHeight();
-  }, [buffer, adjustTextareaHeight]);
-
-  // Adjust textarea height when window resizes
-  useEffect(() => {
-    window.addEventListener('resize', adjustTextareaHeight);
-    return () => {
-      window.removeEventListener('resize', adjustTextareaHeight);
-    };
-  }, [adjustTextareaHeight]);
-
-  useEffect(()=>{ 
-    inputRef.current?.focus(); 
-    // Adjust height on initial render
-    adjustTextareaHeight();
-  }, [adjustTextareaHeight]);
 
   function appendOut(text){
     setOutput(o=>[...o, text]);
@@ -642,31 +616,31 @@ export default function MySQLTerminalSimulator(){
     e.history.push(stmt);
     setEngine(e);
     if (res.clearScreen) setOutput([]);
-    if (res.out) appendOut(formatPrompt(stmt) + '\n' + res.out + '\n');
-  }
-
-  function formatPrompt(stmt){
-    return `mysql> ${stmt}`;
-  }
-
-  function onEnter(){
-    const text = buffer.trim();
-    if (!text) return;
-    // detect multi-line if no ; or \G
-    const ends = /;\s*$|\\G\s*$/m.test(text);
-    if (!ends){ setMultiline(true); setBuffer(prev=>prev+'\n'); return; }
-    setMultiline(false);
-    runStatement(text);
-    setBuffer('');
-  }
-
-  function handleKey(e){
-    if (e.key === 'Enter' && !e.shiftKey){
-      e.preventDefault();
-      onEnter();
+    if (res.out) {
+      appendOut(`mysql> ${stmt}\n${res.out}`);
+    } else {
+      appendOut(`mysql> ${stmt}`);
     }
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==='l'){
-      e.preventDefault(); setOutput([]);
+    return res;
+  }
+
+  function handleCommandSubmit(e) {
+    e.preventDefault();
+    if (!command.trim()) return;
+    
+    const cmd = command.trim();
+    setCommand('');
+    
+    // Process the command
+    runStatement(cmd);
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (command.trim()) {
+        handleCommandSubmit(e);
+      }
     }
   }
 
@@ -696,7 +670,7 @@ export default function MySQLTerminalSimulator(){
   function resetAll(){
     setEngine(createEmptyEngine());
     setOutput([]);
-    setBuffer('');
+    setCommand('');
   }
 
   return (
@@ -708,7 +682,7 @@ export default function MySQLTerminalSimulator(){
             <h1 className="text-lg sm:text-xl font-semibold">MySQL Web Terminal</h1>
           </div>
           <div className="flex flex-wrap gap-1 sm:gap-2">
-            <ToolbarButton icon={Info} label="Help" onClick={()=> appendOut(helpText())} />
+            <ToolbarButton icon={Info} label="Help" onClick={()=> appendOut(`mysql> HELP\n${helpText()}`)} />
             <ToolbarButton icon={Play} label="Seed Sample" onClick={seedSample} />
             <ToolbarButton icon={Eraser} label="Clear" onClick={()=> setOutput([])} />
             <ToolbarButton icon={Trash2} label="Reset" onClick={resetAll} />
@@ -717,44 +691,31 @@ export default function MySQLTerminalSimulator(){
 
         <div className="grid grid-cols-1 gap-3 sm:gap-4">
           <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} className="bg-black/50 rounded-xl sm:rounded-2xl shadow-xl border border-white/10 p-3 sm:p-4">
-            <div className="font-mono text-xs text-slate-400 mb-2 hidden sm:block">Type SQL and press Enter. Commands end with <span className="text-slate-200">;</span> or <span className="text-slate-200">\\G</span></div>
+            <div className="font-mono text-xs text-slate-400 mb-2 hidden sm:block">Type SQL commands directly in the terminal. Commands end with <span className="text-slate-200">;</span> or <span className="text-slate-200">\\G</span></div>
             <div 
               ref={outputRef}
-              className="bg-black rounded-lg sm:rounded-xl p-2 sm:p-3 h-48 sm:h-64 md:h-[420px] overflow-auto border border-white/10"
+              className="bg-black rounded-lg sm:rounded-xl p-2 sm:p-3 h-48 sm:h-64 md:h-[420px] overflow-auto border border-white/10 font-mono text-sm"
             >
-              <pre className="whitespace-pre-wrap text-xs sm:text-sm leading-relaxed">{output.join('\n')}</pre>
-            </div>
-            <div className="mt-2 sm:mt-3 flex flex-col sm:flex-row gap-2">
-              <div className="flex items-start">
-                <span className="font-mono text-sm sm:text-base mt-2 sm:mt-3">mysql&gt;</span>
-              </div>
-              <div className="flex-1 flex flex-col gap-2">
-                <textarea
-                  ref={inputRef}
-                  value={buffer}
-                  onChange={e=> setBuffer(e.target.value)}
-                  onKeyDown={handleKey}
-                  placeholder={multiline?"(multi-line) end with ; or \\G":"Enter SQL or type HELP"}
-                  className="flex-1 bg-black/70 border border-white/10 rounded-lg sm:rounded-xl p-2 sm:p-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none overflow-hidden min-h-[60px]"
-                />
-                <div className="flex gap-2">
-                  <button 
-                    onClick={() => setBuffer('')} 
-                    className="px-3 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs sm:text-sm"
-                  >
-                    Clear
-                  </button>
-                  <button 
-                    onClick={onEnter} 
-                    className="flex-1 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 shadow text-sm font-medium"
-                  >
-                    Execute (Enter)
-                  </button>
-                </div>
+              {output.map((line, i) => (
+                <div key={i} className="whitespace-pre-wrap">{line}</div>
+              ))}
+              <div className="flex items-start mt-1">
+                <span className="mr-1">mysql&gt;</span>
+                <form onSubmit={handleCommandSubmit} className="flex-1">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={command}
+                    onChange={(e) => setCommand(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="bg-transparent border-none outline-none flex-1 w-full"
+                    spellCheck={false}
+                  />
+                </form>
               </div>
             </div>
             <div className="mt-2 sm:mt-3 font-mono text-xs text-slate-400 sm:hidden">
-              Type SQL and press Enter. End with <span className="text-slate-200">;</span> or <span className="text-slate-200">\\G</span>
+              Type SQL commands directly in the terminal. End with <span className="text-slate-200">;</span> or <span className="text-slate-200">\\G</span>
             </div>
           </motion.div>
 
