@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans;
+  }
+}
+
+@layer components {
+  .terminal-input {
+    @apply font-mono text-sm bg-gray-900 text-green-400 p-2 rounded;
+  }
+  
+  .terminal-output {
+    @apply font-mono text-sm whitespace-pre-wrap;
+  }
+}
