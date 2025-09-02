@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Play, Trash2, Upload, Download, Info, Database, ChevronRight, Eraser } from "lucide-react";
 
@@ -601,19 +601,36 @@ export default function MySQLTerminalSimulator(){
   }, [output]);
 
   // Auto-adjust textarea height based on content
-  useEffect(() => {
+  const adjustTextareaHeight = useCallback(() => {
     if (inputRef.current) {
-      // We need to temporarily set the height to auto to get the correct scrollHeight
-      const current = inputRef.current;
-      current.style.height = 'auto';
-      const scrollHeight = current.scrollHeight;
-      // Set the height to either the scrollHeight or a max of 200px, whichever is smaller
-      // But ensure a minimum height of 60px
-      current.style.height = Math.max(60, Math.min(scrollHeight, 200)) + 'px';
+      const textarea = inputRef.current;
+      // Reset height to auto to get the correct scrollHeight
+      textarea.style.height = 'auto';
+      // Calculate new height based on content
+      const newHeight = Math.max(60, Math.min(textarea.scrollHeight, 200));
+      // Set the new height
+      textarea.style.height = newHeight + 'px';
     }
-  }, [buffer]);
+  }, []);
 
-  useEffect(()=>{ inputRef.current?.focus(); }, []);
+  // Adjust textarea height when buffer changes
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [buffer, adjustTextareaHeight]);
+
+  // Adjust textarea height when window resizes
+  useEffect(() => {
+    window.addEventListener('resize', adjustTextareaHeight);
+    return () => {
+      window.removeEventListener('resize', adjustTextareaHeight);
+    };
+  }, [adjustTextareaHeight]);
+
+  useEffect(()=>{ 
+    inputRef.current?.focus(); 
+    // Adjust height on initial render
+    adjustTextareaHeight();
+  }, [adjustTextareaHeight]);
 
   function appendOut(text){
     setOutput(o=>[...o, text]);
