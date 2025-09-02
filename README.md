@@ -49,7 +49,7 @@ A browser-based MySQL terminal simulator built with React, Tailwind CSS, and Fra
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/maxxNcode/mysql-web-terminal-simulator.git
    ```
 
 2. Navigate to the project directory:
@@ -78,6 +78,18 @@ npm run build
 ```
 
 The built files will be in the `dist` directory.
+
+## Deployment
+
+This project is configured to deploy to GitHub Pages using GitHub Actions.
+
+1. Fork or clone this repository
+2. Enable GitHub Pages in your repository settings (Settings > Pages)
+3. Select "GitHub Actions" as the source
+4. Push to the master branch to trigger the deployment workflow
+
+After deployment, your app will be available at:
+`https://[your-username].github.io/mysql-web-terminal-simulator/`
 
 ## Project Structure
 
